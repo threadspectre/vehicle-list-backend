@@ -3,8 +3,8 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Configuration;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+// using Newtonsoft.Json;
+// using Newtonsoft.Json.Linq;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -37,17 +37,48 @@ app.MapGet("/vehicles", async () =>
     // Console.Write(vehiclesRaw);
     VehicleList vehicles = new VehicleList();
     for(int i = 0; i < length; i++){
-        Console.WriteLine(vehiclesRaw[i]);
+        // Console.WriteLine(vehiclesRaw[i]);
         var vehicleTypes = vehiclesRaw[i].GetProperty("VehicleTypes");
         int vehicleTypesLength = vehicleTypes.GetArrayLength();
         if(vehicleTypesLength > 0){
-            var id = vehiclesRaw[i].GetProperty("Mfr_ID") ? vehiclesRaw[i].GetProperty("Mfr_ID") : null;
-            var shortName = vehiclesRaw[i].GetProperty("Mfr_CommonName") ? vehiclesRaw[i].GetProperty("Mfr_CommonName") : null;
-            var fullName = vehiclesRaw[i].GetProperty("Mfr_Name") ? vehiclesRaw[i].GetProperty("Mfr_Name") : null;
-            var country = vehiclesRaw[i].GetProperty("Country") ? vehiclesRaw[i].GetProperty("Country") : null;
-            Manufacturer manufacturer = new Manufacturer { Id = id, ShortName = shortName, FullName = fullName, Country = country };
+            Console.WriteLine(vehiclesRaw[i]);
+            var id = -1;
+            var shortName = "";
+            var fullName = "";
+            var country = "";
+            try{
+                id = vehiclesRaw[i].GetProperty("Mfr_ID").GetInt32(); 
+            }
+            catch{
+                id = -2;
+            };
+            try{
+                shortName = vehiclesRaw[i].GetProperty("Mfr_CommonName").GetString();
+            }
+            catch{
+                shortName = "unknown";
+            }
+            try{
+                fullName = vehiclesRaw[i].GetProperty("Mfr_Name").GetString();
+            }
+            catch{
+                fullName = "unknown";
+            }
+            try{
+                country = vehiclesRaw[i].GetProperty("Country").GetString();
+            }
+            catch{
+                country = "Unknown";
+            }
+
+            Manufacturer manufacturer = new Manufacturer { 
+                Id = id, 
+                ShortName = shortName, 
+                FullName = fullName, 
+                Country = country 
+            };
             for(int j = 0; j < vehicleTypesLength; j++){
-                var vehicleTypeName = vehicleTypes.GetProperty("Name");
+                var vehicleTypeName = vehicleTypes[j].GetProperty("Name").GetString();
                 vehicles.AddManufacturerToVehicleType(vehicleTypeName, manufacturer);
             }
         }
@@ -55,7 +86,8 @@ app.MapGet("/vehicles", async () =>
     }
     // dynamic vehicles = JObject.Parse(vehiclesRaw);
     // Console.Write(vehicles);
-    return vehiclesRaw;
+    string jsonString = JsonSerializer.Serialize(vehicles);
+    return jsonString;
 })
 .WithName("GetVehicles")
 .WithOpenApi();
