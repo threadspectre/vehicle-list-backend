@@ -1,24 +1,13 @@
 # Use the official .NET Core SDK as a parent image
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:8.0-alpine AS build-env
 WORKDIR /app
 
-# Copy the project file and restore any dependencies (use .csproj for the project name)
-COPY *.csproj ./
+COPY . ./
 RUN dotnet restore
-
-# Copy the rest of the application code
-COPY . .
-
-# Publish the application
 RUN dotnet publish -c Release -o out
 
-# Build the runtime image
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
+FROM mcr.microsoft.com/dotnet/aspnet:8.0-alpine
 WORKDIR /app
-COPY --from=build /app/out ./
-
-# Expose the port your application will run on
-EXPOSE 80
-
+COPY --from=build-env /app/out .
 # Start the application
 ENTRYPOINT ["dotnet", "vehicle-list-app.dll"]

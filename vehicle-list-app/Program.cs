@@ -1,10 +1,4 @@
-using System;
-using System.Net.Http.Json;
 using System.Text.Json;
-using System.Threading.Tasks;
-using System.Configuration;
-// using Newtonsoft.Json;
-// using Newtonsoft.Json.Linq;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,13 +6,18 @@ var builder = WebApplication.CreateBuilder(args);
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-
+builder.Services.AddCors();
+ 
 var app = builder.Build();
 
 app.UseDeveloperExceptionPage();
 app.UseSwagger();
 app.UseSwaggerUI();
-
+app.UseCors(builder => builder
+ .AllowAnyOrigin()
+ .AllowAnyMethod()
+ .AllowAnyHeader()
+);
 
 app.MapGet("/vehicles", async () =>
 {
@@ -34,14 +33,11 @@ app.MapGet("/vehicles", async () =>
     if(length == 0){
         return "";
     }
-    // Console.Write(vehiclesRaw);
     VehicleList vehicles = new VehicleList();
     for(int i = 0; i < length; i++){
-        // Console.WriteLine(vehiclesRaw[i]);
         var vehicleTypes = vehiclesRaw[i].GetProperty("VehicleTypes");
         int vehicleTypesLength = vehicleTypes.GetArrayLength();
         if(vehicleTypesLength > 0){
-            Console.WriteLine(vehiclesRaw[i]);
             var id = -1;
             var shortName = "";
             var fullName = "";
@@ -84,9 +80,7 @@ app.MapGet("/vehicles", async () =>
         }
 
     }
-    // dynamic vehicles = JObject.Parse(vehiclesRaw);
-    // Console.Write(vehicles);
-    string jsonString = JsonSerializer.Serialize(vehicles);
+    string jsonString = JsonSerializer.Serialize(vehicles.Vehicles);
     return jsonString;
 })
 .WithName("GetVehicles")
